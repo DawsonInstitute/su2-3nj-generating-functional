@@ -5,7 +5,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 import csv
 import sympy as sp
-from project.su2_3nj import generate_3nj, recursion_3nj
+from su2_3nj_gen.su2_3nj import generate_3nj, recursion_3nj
 
 def test_recursion_equivalence():
     js = [1, 2, 3, 4, 5, 6]
