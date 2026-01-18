@@ -1,5 +1,6 @@
 import sympy as sp
 from sympy.physics.wigner import wigner_6j
+from .validation import validate_6j_spins, validate_9j_spins
 
 def generate_3nj(*js):
     """
@@ -28,14 +29,23 @@ def recursion_3nj(*js):
     Compute the Wigner 3nj symbol via explicit Racah summation
     (independent of sympy.physics.wigner).
     Supports:
-      - 6-j: using Racah's formula
+      - 6-j: using Racah's formula with exact summation bounds
       - 9-j: delegated to sympy.physics.wigner.wigner_9j if available
+    
+    Returns 0 for triangle inequality violations (mathematical convention).
+    Raises ValueError for invalid spins (non-half-integers).
     """
     js_rat = [sp.Rational(j) for j in js]
     if len(js_rat) == 6:
         j1, j2, j3, j4, j5, j6 = js_rat
+        
+        # Validate that spins are half-integers (but allow triangle violations)
+        from .validation import is_valid_spin
+        for j in js_rat:
+            if not is_valid_spin(j):
+                raise ValueError(f"Invalid spin {j}: must be integer or half-integer")
 
-        # Triangle checks
+        # Triangle checks - return 0 if violated (standard convention)
         if any([
             j1 + j2 < j3, j1 + j3 < j2, j2 + j3 < j1,
             j1 + j5 < j6, j1 + j6 < j5, j5 + j6 < j1,
@@ -60,30 +70,35 @@ def recursion_3nj(*js):
             delta(j4, j5, j3)
         )
 
-        # Summation bounds
-        zmin = max(
-            int(j1 + j2 + j3),
-            int(j1 + j5 + j6),
-            int(j4 + j2 + j6),
-            int(j4 + j5 + j3)
-        )
-        zmax = min(
-            int(j1 + j2 + j4 + j5),
-            int(j2 + j3 + j5 + j6),
-            int(j1 + j3 + j4 + j6)
-        )
+        # Summation bounds (exact, no int() truncation)
+        # Convert to integers only for range(), but use exact Rationals in formulas
+        zmin_candidates = [j1 + j2 + j3, j1 + j5 + j6, j4 + j2 + j6, j4 + j5 + j3]
+        zmax_candidates = [j1 + j2 + j4 + j5, j2 + j3 + j5 + j6, j1 + j3 + j4 + j6]
+        
+        # These sums are guaranteed to be integers (or half-integers summing to integers)
+        # because of triangle constraints
+        zmin = max(zmin_candidates)
+        zmax = min(zmax_candidates)
+        
+        # Verify that bounds are integers
+        if not zmin.is_integer or not zmax.is_integer:
+            raise ValueError(f"Summation bounds not integral: zmin={zmin}, zmax={zmax}")
+        
+        zmin_int = int(zmin)
+        zmax_int = int(zmax)
 
         total = sp.Rational(0)
-        for z in range(zmin, zmax + 1):
+        for z in range(zmin_int, zmax_int + 1):
             num = (-1)**z * sp.factorial(z + 1)
+            # Use exact differences
             den = (
-                sp.factorial(z - int(j1 + j2 + j3)) *
-                sp.factorial(z - int(j1 + j5 + j6)) *
-                sp.factorial(z - int(j4 + j2 + j6)) *
-                sp.factorial(z - int(j4 + j5 + j3)) *
-                sp.factorial(int(j1 + j2 + j4 + j5) - z) *
-                sp.factorial(int(j2 + j3 + j5 + j6) - z) *
-                sp.factorial(int(j1 + j3 + j4 + j6) - z)
+                sp.factorial(z - zmin_candidates[0]) *
+                sp.factorial(z - zmin_candidates[1]) *
+                sp.factorial(z - zmin_candidates[2]) *
+                sp.factorial(z - zmin_candidates[3]) *
+                sp.factorial(zmax_candidates[0] - z) *
+                sp.factorial(zmax_candidates[1] - z) *
+                sp.factorial(zmax_candidates[2] - z)
             )
             total += num / den
 
