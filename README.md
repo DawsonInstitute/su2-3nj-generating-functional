@@ -8,16 +8,28 @@ This repository contains research material and code exploring a generating funct
 
 ## Mathematical Formulation (summary)
 
-Under the assumptions described in the paper and scripts, a convenient representation of the generating functional is
+Under the assumptions described in the notes and scripts, a convenient representation of the generating functional is
 
 $$
 G(\{x_e\})
 =\;\int \prod_{v=1}^n \frac{d^2w_v}{\pi}\,\exp\Bigl(-\sum_v\lVert w_v\rVert^2\Bigr)
 \;\prod_{e=\langle i,j\rangle}\exp\bigl(x_e\,\epsilon(w_i,w_j)\bigr)
-\;\approx\;\frac{1}{\sqrt{\det\!\bigl(I - K(\{x_e\})\bigr)}},
+\;=\;\frac{1}{\sqrt{\det\!\bigl(I - K(\{x_e\})\bigr)}},
 $$
 
 where $K$ is the antisymmetric adjacency matrix constructed from the edge variables $x_e$. The formula above summarizes the analytic form used in the repository; several derivations and special-case expansions are provided in the scripts and notes. Readers should treat boundary cases and singular parameter combinations with care (see Validation & Limitations below).
+
+### Coefficient extraction and conventions
+
+The determinant generating functional defines a canonical family of series coefficients
+
+$$
+C_G(\{j_e\})\;:=\;\frac{1}{\prod_e (2j_e)!}\,\Bigl[\prod_e x_e^{2j_e}\Bigr] G(\{x_e\}).
+$$
+
+Identifying $C_G$ with a named “Wigner $3n\!j$ symbol” requires an additional **convention-dependent normalization and phase map** (choices include intertwiner normalization, edge orientations/sign conventions in $K$, and oscillator/Bargmann conventions). In general this map may involve spin-dependent sign factors and normalization factors such as $\sqrt{2j+1}$ and/or triangle coefficients.
+
+This repository therefore treats $C_G$ as the primary output of the determinant construction; any mapping to a specific Wigner-symbol convention should be stated explicitly and validated numerically.
 
 #### Example: 6-j case
 For the 6-j case ($n=4$) with two edge variables $x,y$, the generating expression used in the scripts reduces to a closed-form factorization for many parameter choices,
